@@ -37,7 +37,12 @@ const menu: MenuItem[] = [
     subMenu: [
       { name: "All Plans", href: "/agency/subscriptions" },
       { name: "Create Plan", href: "/agency/subscriptions/create" },
-      { name: "Plan Features", href: "/agency/subscriptions/features" }
+      { name: "Plan Features", href: "/agency/subscriptions/features" },
+      { name: "Access Control", href: "/agency/subscriptions/access-control" },
+      { name: "WhatsApp Marketing", href: "/agency/subscriptions/whatsapp-marketing" }
+      
+
+  
     ]
   },
   { name: "Leads (CRM)", icon: Users, href: "/agency/leads" },
