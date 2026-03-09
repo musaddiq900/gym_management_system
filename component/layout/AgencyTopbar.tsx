@@ -1,101 +1,126 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import {
-  Search,
-  Bell,
-  User,
-  Sun,
-  Moon,
-  Plus
-} from "lucide-react"
-import Link from "next/link"
+import { useEffect, useRef, useState } from "react";
+import { Search, Bell, HelpCircle, ChevronDown, Menu } from "lucide-react";
 
-const notifications = [
-  { id: 1, message: "New Lead: John Doe" },
-  { id: 2, message: "Gym Plan Expiring: FitLife Gym" },
-  { id: 3, message: "Payment Failed: HealthHub" }
-]
+function useOutsideClick<T extends HTMLElement>(
+  ref: React.RefObject<T | null>,
+  handler: () => void
+) {
+  useEffect(() => {
+    const listener = (e: MouseEvent) => {
+      const el = ref.current;
+      if (!el) return;
+      if (el.contains(e.target as Node)) return;
+      handler();
+    };
+    document.addEventListener("mousedown", listener);
+    return () => document.removeEventListener("mousedown", listener);
+  }, [ref, handler]);
+}
 
-export default function AgencyTopbar() {
-  const [theme, setTheme] = useState<"light" | "dark">("light")
-  const [showNotif, setShowNotif] = useState(false)
-  const [showProfile, setShowProfile] = useState(false)
-  const [showQuickAdd, setShowQuickAdd] = useState(false)
+export default function AgencyTopbar({
+  lastUpdated = "Today, 10:42 AM",
+  onMenuClick,
+}: {
+  lastUpdated?: string;
+  onMenuClick?: () => void;
+}) {
+  const [range, setRange] = useState<"This Week" | "This Month" | "This Year">(
+    "This Month"
+  );
+  const [openRange, setOpenRange] = useState(false);
+  const rangeRef = useRef<HTMLDivElement>(null);
 
-  const toggleTheme = () => {
-    const newTheme = theme === "light" ? "dark" : "light"
-    setTheme(newTheme)
-    document.documentElement.setAttribute("data-theme", newTheme)
-  }
+  useOutsideClick(rangeRef, () => setOpenRange(false));
 
   return (
-    <div className="flex items-center justify-between p-4 bg-white shadow-md">
-      {/* Left: Search */}
-      <div className="flex items-center gap-3">
-        <div className="flex items-center bg-gray-100 rounded-full px-3 py-1 w-64">
-          <Search size={16} className="text-gray-400" />
-          <input 
-            type="text" 
-            placeholder="Search..." 
-            className="bg-transparent outline-none ml-2 w-full text-gray-700"
-          />
-        </div>
-      </div>
-
-      {/* Right: Actions */}
-      <div className="flex items-center gap-4 relative">
-        {/* Theme Toggle */}
-        <button onClick={toggleTheme} className="p-2 rounded-full hover:bg-gray-100 transition">
-          {theme === "light" ? <Moon size={18} /> : <Sun size={18} />}
-        </button>
-
-        {/* Quick Add */}
-        <div className="relative">
+    <header className="sticky top-0 z-40 w-full bg-white">
+      <div className="flex items-center justify-between gap-3 px-4 py-3">
+        {/* LEFT: Menu + Search */}
+        <div className="flex items-center gap-3 flex-1">
+          {/* Mobile menu */}
           <button
-            onClick={() => setShowQuickAdd(!showQuickAdd)}
-            className="p-2 rounded-full hover:bg-gray-100 transition"
+            onClick={onMenuClick}
+            className="md:hidden p-2 rounded-full hover:bg-gray-100 transition"
+            aria-label="Open menu"
+            type="button"
           >
-            <Plus size={18} />
+            <Menu size={18} className="text-gray-700" />
           </button>
-          {showQuickAdd && (
-            <div className="absolute right-0 mt-2 w-40 bg-white rounded-xl shadow-lg border border-gray-200 flex flex-col">
-              <Link href="/agency/gyms/add" className="px-4 py-2 hover:bg-gray-100 transition">Add Gym</Link>
-              <Link href="/agency/leads/add" className="px-4 py-2 hover:bg-gray-100 transition">Add Lead</Link>
-              <Link href="/agency/subscriptions/create" className="px-4 py-2 hover:bg-gray-100 transition">Create Plan</Link>
-            </div>
-          )}
+
+          {/* Search (NO border, shadow pill) */}
+          <div className="flex items-center bg-white shadow-sm rounded-full px-4 py-2 w-full max-w-md">
+            <Search size={16} className="text-gray-400" />
+            <input
+              placeholder="Search for gyms, leads, or staff..."
+              className="bg-transparent outline-none text-sm ml-2 w-full text-gray-700 placeholder:text-gray-400"
+            />
+          </div>
         </div>
 
-        {/* Notifications */}
-        <div className="relative">
-          <button onClick={() => setShowNotif(!showNotif)} className="p-2 rounded-full hover:bg-gray-100 transition">
-            <Bell size={18} />
-          </button>
-          {showNotif && (
-            <div className="absolute right-0 mt-2 w-60 bg-white rounded-xl shadow-lg border border-gray-200 flex flex-col">
-              {notifications.map(n => (
-                <div key={n.id} className="px-4 py-2 hover:bg-gray-100 transition">{n.message}</div>
-              ))}
-            </div>
-          )}
-        </div>
+        {/* RIGHT: last updated + icons + dropdown */}
+        <div className="flex items-center gap-3">
+          {/* Last updated */}
+          <div className="hidden md:block text-xs text-gray-500">
+            Last updated: {lastUpdated}
+          </div>
 
-        {/* Profile */}
-        <div className="relative">
-          <button onClick={() => setShowProfile(!showProfile)} className="flex items-center gap-2 p-2 rounded-full hover:bg-gray-100 transition">
-            <User size={18} />
-            <span className="hidden md:inline text-gray-700 font-medium">Admin</span>
+          {/* Bell icon */}
+          <button
+            className="p-2 rounded-full hover:bg-gray-100 transition"
+            aria-label="Notifications"
+            type="button"
+          >
+            <Bell size={18} className="text-gray-600" />
           </button>
-          {showProfile && (
-            <div className="absolute right-0 mt-2 w-40 bg-white rounded-xl shadow-lg border border-gray-200 flex flex-col">
-              <Link href="/agency/profile" className="px-4 py-2 hover:bg-gray-100 transition">Profile</Link>
-              <Link href="/agency/settings" className="px-4 py-2 hover:bg-gray-100 transition">Settings</Link>
-              <button className="text-left px-4 py-2 hover:bg-gray-100 transition">Logout</button>
-            </div>
-          )}
+
+          {/* Help / Question icon */}
+          <button
+            className="p-2 rounded-full hover:bg-gray-100 transition"
+            aria-label="Help"
+            type="button"
+          >
+            <HelpCircle size={18} className="text-gray-600" />
+          </button>
+
+          {/* Divider */}
+          <div className="hidden sm:block h-6 w-px bg-gray-200" />
+
+          {/* This Month dropdown (NO border, shadow pill) */}
+          <div className="relative" ref={rangeRef}>
+            <button
+              onClick={() => setOpenRange((v) => !v)}
+              className="flex items-center gap-2 bg-white shadow-sm rounded-full px-4 py-2 text-sm font-medium text-gray-700 hover:shadow-md transition"
+              type="button"
+            >
+              {range}
+              <ChevronDown size={16} className="text-gray-400" />
+            </button>
+
+            {openRange && (
+              <div className="absolute right-0 mt-2 w-44 overflow-hidden rounded-2xl bg-white shadow-xl border border-gray-100">
+                {(["This Week", "This Month", "This Year"] as const).map((r) => (
+                  <button
+                    key={r}
+                    onClick={() => {
+                      setRange(r);
+                      setOpenRange(false);
+                    }}
+                    className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50"
+                    type="button"
+                  >
+                    {r}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
-    </div>
-  )
+
+      {/* subtle bottom border line like screenshot */}
+      <div className="h-px w-full bg-gray-100" />
+    </header>
+  );
 }
